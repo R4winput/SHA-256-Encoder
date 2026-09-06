@@ -1,4 +1,5 @@
 import tkinter as tk
+import re
 from hasher import hash_text
 
 # ─────────────────────────────────────────────
@@ -20,6 +21,7 @@ ACCENT_COLOR = "#58A6FF"
 ACCENT_HOVER = "#79C0FF"
 
 HASH_COLOR = "#7EE787"
+HASH_COLOR2 = "#FF0000"
 
 # ─────────────────────────────────────────────
 # Window
@@ -43,6 +45,9 @@ root.configure(bg=BG_COLOR)
 def on_text_change(event):
     translate_text()
 
+def on_hash_change(event):
+    validate_hash()
+
 def clear_input():
     input_text.delete("1.0", tk.END)
     input_text.focus_set()
@@ -50,6 +55,7 @@ def clear_input():
 
 def translate_text():
     text = input_text.get("1.0", "end-1c")
+    input_text.config(fg=TEXT_COLOR)
 
     output_text.config(state="normal")
     output_text.delete("1.0", tk.END)
@@ -65,7 +71,7 @@ def translate_text():
         )
 
         output_text.config(
-            state="disabled"
+            state="normal"
         )
 
         status_indicator.config(
@@ -87,12 +93,61 @@ def translate_text():
     )
 
     output_text.config(
-        state="disabled"
+        state="normal"
     )
 
     status_indicator.config(
     text="● LIVE HASHING",
     fg=STATUS_SUCCESS
+    )
+
+def validate_hash():
+    hash_value = output_text.get("1.0", "end-1c").strip()
+
+    input_text.delete("1.0", tk.END)
+
+    if not hash_value:
+        input_text.insert(
+            "1.0",
+            "Enter a SHA-256 hash to validate."
+        )
+
+        input_text.config(fg=SECONDARY_COLOR)
+
+        status_indicator.config(
+            text="● WAITING FOR INPUT",
+            fg=STATUS_WARNING
+        )
+
+        return
+
+    if not re.fullmatch(r"[0-9a-fA-F]{64}", hash_value):
+        input_text.insert(
+            "1.0",
+            "Invalid SHA-256 hash."
+        )
+
+        input_text.config(fg=SECONDARY_COLOR)
+
+        input_text.config(fg=HASH_COLOR2)
+
+        status_indicator.config(
+            text="● INVALID SHA-256 HASH",
+            fg=STATUS_WARNING
+        )
+
+        return
+
+    input_text.insert(
+        "1.0",
+        "Valid SHA-256 hash."
+    )
+
+    input_text.config(fg=HASH_COLOR)
+
+    status_indicator.config(
+        text="● VALID SHA-256 HASH",
+        fg=STATUS_SUCCESS
     )
 
 def copy_hash():
@@ -364,7 +419,7 @@ input_text.bind(
 
 arrow = tk.Label(
     translation_frame,
-    text="→",
+    text="⇆",
     font=("Consolas", 24),
     fg=ACCENT_COLOR,
     bg=BG_COLOR
@@ -438,7 +493,7 @@ output_text = tk.Text(
     wrap="char",
     padx=18,
     pady=12,
-    state="disabled"
+    state="normal"
 )
 
 output_text.grid(
@@ -447,6 +502,12 @@ output_text.grid(
     sticky="nsew",
     padx=2,
     pady=(0, 5)
+)
+
+
+output_text.bind(
+    "<KeyRelease>",
+    on_hash_change
 )
 
 copy_button = tk.Button(
