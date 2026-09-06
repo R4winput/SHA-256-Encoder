@@ -41,13 +41,15 @@ root.configure(bg=BG_COLOR)
 # ─────────────────────────────────────────────
 
 def on_text_change(event):
-    status_indicator.config(
-        text="● READY",
-        fg=STATUS_READY
-    )
+    translate_text()
+
+def clear_input():
+    input_text.delete("1.0", tk.END)
+    input_text.focus_set()
+    translate_text()
 
 def translate_text():
-    text = input_text.get("1.0", tk.END).strip()
+    text = input_text.get("1.0", "end-1c")
 
     output_text.config(state="normal")
     output_text.delete("1.0", tk.END)
@@ -89,8 +91,8 @@ def translate_text():
     )
 
     status_indicator.config(
-        text="● HASH GENERATED",
-        fg=STATUS_SUCCESS
+    text="● LIVE HASHING",
+    fg=STATUS_SUCCESS
     )
 
 def copy_hash():
@@ -278,8 +280,20 @@ input_panel.pack(
 )
 
 
-input_label = tk.Label(
+input_header = tk.Frame(
     input_panel,
+    bg=PANEL_COLOR
+)
+
+input_header.pack(
+    fill="x",
+    padx=18,
+    pady=(15, 8)
+)
+
+
+input_label = tk.Label(
+    input_header,
     text="PLAIN TEXT",
     font=("Consolas", 10, "bold"),
     fg=SECONDARY_COLOR,
@@ -288,8 +302,29 @@ input_label = tk.Label(
 
 input_label.pack(
     anchor="w",
-    padx=18,
-    pady=(15, 8)
+    side="left"
+)
+
+
+clear_button = tk.Button(
+    input_header,
+    text="×",
+    command=clear_input,
+    font=("Consolas", 16, "bold"),
+    bg=PANEL_COLOR,
+    fg=TEXT_COLOR,
+    activebackground=PANEL_COLOR,
+    activeforeground=ACCENT_HOVER,
+    relief="flat",
+    borderwidth=0,
+    cursor="hand2",
+    padx=4,
+    pady=0
+)
+
+clear_button.pack(
+    anchor="e",
+    side="right"
 )
 
 
@@ -483,6 +518,28 @@ copy_button.bind(
 copy_button.bind(
     "<Leave>",
     copy_button_leave
+)
+
+
+def clear_button_enter(event):
+    clear_button.config(
+        fg=ACCENT_HOVER
+    )
+
+def clear_button_leave(event):
+    clear_button.config(
+        fg=TEXT_COLOR
+    )
+
+
+clear_button.bind(
+    "<Enter>",
+    clear_button_enter
+)
+
+clear_button.bind(
+    "<Leave>",
+    clear_button_leave
 )
 
 # ─────────────────────────────────────────────
