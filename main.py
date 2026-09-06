@@ -1,7 +1,5 @@
 import tkinter as tk
-
 from hasher import hash_text
-
 
 # ─────────────────────────────────────────────
 # Colors
@@ -22,7 +20,6 @@ ACCENT_COLOR = "#58A6FF"
 ACCENT_HOVER = "#79C0FF"
 
 HASH_COLOR = "#7EE787"
-
 
 # ─────────────────────────────────────────────
 # Window
@@ -96,18 +93,44 @@ def translate_text():
         fg=STATUS_SUCCESS
     )
 
+def copy_hash():
+    hash_value = output_text.get("1.0", tk.END).strip()
+
+    if not hash_value:
+        status_indicator.config(
+            text="● NOTHING TO COPY",
+            fg=STATUS_WARNING
+        )
+        return
+
+    root.clipboard_clear()
+    root.clipboard_append(hash_value)
+    root.update()
+
+    status_indicator.config(
+        text="● HASH COPIED",
+        fg=STATUS_SUCCESS
+    )
 
 def on_button_enter(event):
     translate_button.config(
         bg=ACCENT_HOVER
     )
 
-
 def on_button_leave(event):
     translate_button.config(
         bg=ACCENT_COLOR
     )
 
+def copy_button_enter(event):
+    copy_button.config(
+        fg=ACCENT_HOVER
+    )
+
+def copy_button_leave(event):
+    copy_button.config(
+        fg=TEXT_COLOR
+    )
 
 # ─────────────────────────────────────────────
 # Main Container
@@ -347,6 +370,11 @@ output_panel.pack(
     pady=1
 )
 
+output_panel.grid_rowconfigure(0, weight=0)
+output_panel.grid_rowconfigure(1, weight=1)
+output_panel.grid_rowconfigure(2, weight=0)
+
+output_panel.grid_columnconfigure(0, weight=1)
 
 output_label = tk.Label(
     output_panel,
@@ -356,8 +384,10 @@ output_label = tk.Label(
     bg=PANEL_COLOR
 )
 
-output_label.pack(
-    anchor="w",
+output_label.grid(
+    row=0,
+    column=0,
+    sticky="w",
     padx=18,
     pady=(15, 8)
 )
@@ -376,11 +406,36 @@ output_text = tk.Text(
     state="disabled"
 )
 
-output_text.pack(
-    fill="both",
-    expand=True,
+output_text.grid(
+    row=1,
+    column=0,
+    sticky="nsew",
     padx=2,
     pady=(0, 5)
+)
+
+copy_button = tk.Button(
+    output_panel,
+    text="⧉",
+    command=copy_hash,
+    font=("Consolas", 18),
+    bg=PANEL_COLOR,
+    fg=TEXT_COLOR,
+    activebackground=PANEL_COLOR,
+    activeforeground=TEXT_COLOR,
+    relief="flat",
+    borderwidth=0,
+    cursor="hand2",
+    padx=8,
+    pady=4
+)
+
+copy_button.grid(
+    row=2,
+    column=0,
+    sticky="e",
+    padx=18,
+    pady=(5, 15)
 )
 
 # ─────────────────────────────────────────────
@@ -419,6 +474,16 @@ translate_button.bind(
     on_button_leave
 )
 
+
+copy_button.bind(
+    "<Enter>",
+    copy_button_enter
+)
+
+copy_button.bind(
+    "<Leave>",
+    copy_button_leave
+)
 
 # ─────────────────────────────────────────────
 # Footer
