@@ -12,7 +12,6 @@ STATUS_WARNING = "#D29922"
 
 BG_COLOR = "#0D1117"
 PANEL_COLOR = "#161B22"
-BORDER_COLOR = "#30363D"
 
 TEXT_COLOR = "#E6EDF3"
 SECONDARY_COLOR = "#8B949E"
@@ -30,8 +29,8 @@ HASH_COLOR2 = "#FF0000"
 root = tk.Tk()
 
 root.title("SHA-256 Encoder")
-root.geometry("1000x600")
-root.minsize(900, 550)
+root.geometry("1100x650")
+root.minsize(760, 480)
 
 root.resizable(True, True)
 
@@ -61,11 +60,6 @@ def translate_text():
     output_text.delete("1.0", tk.END)
 
     if not text:
-        output_text.insert(
-            "1.0",
-            "Enter some text to generate a hash."
-        )
-
         output_text.config(
             fg=SECONDARY_COLOR
         )
@@ -107,11 +101,6 @@ def validate_hash():
     input_text.delete("1.0", tk.END)
 
     if not hash_value:
-        input_text.insert(
-            "1.0",
-            "Enter a SHA-256 hash to validate."
-        )
-
         input_text.config(fg=SECONDARY_COLOR)
 
         status_indicator.config(
@@ -169,16 +158,6 @@ def copy_hash():
         fg=STATUS_SUCCESS
     )
 
-def on_button_enter(event):
-    translate_button.config(
-        bg=ACCENT_HOVER
-    )
-
-def on_button_leave(event):
-    translate_button.config(
-        bg=ACCENT_COLOR
-    )
-
 def copy_button_enter(event):
     copy_button.config(
         fg=ACCENT_HOVER
@@ -188,6 +167,101 @@ def copy_button_leave(event):
     copy_button.config(
         fg=TEXT_COLOR
     )
+
+def draw_rounded_shape(canvas, tag, x1, y1, x2, y2, radius, fill):
+    canvas.delete(tag)
+
+    if x2 <= x1 or y2 <= y1:
+        return
+
+    radius = min(radius, (x2 - x1) / 2, (y2 - y1) / 2)
+
+    canvas.create_rectangle(
+        x1 + radius,
+        y1,
+        x2 - radius,
+        y2,
+        fill=fill,
+        outline=fill,
+        tags=tag
+    )
+    canvas.create_rectangle(
+        x1,
+        y1 + radius,
+        x2,
+        y2 - radius,
+        fill=fill,
+        outline=fill,
+        tags=tag
+    )
+
+    for x, y, start in (
+        (x1, y1, 90),
+        (x2 - 2 * radius, y1, 0),
+        (x2 - 2 * radius, y2 - 2 * radius, 270),
+        (x1, y2 - 2 * radius, 180)
+    ):
+        canvas.create_arc(
+            x,
+            y,
+            x + 2 * radius,
+            y + 2 * radius,
+            start=start,
+            extent=90,
+            fill=fill,
+            outline=fill,
+            tags=tag
+        )
+
+def create_rounded_panel(parent):
+    canvas = tk.Canvas(
+        parent,
+        bg=BG_COLOR,
+        highlightthickness=0,
+        borderwidth=0
+    )
+
+    panel = tk.Frame(
+        canvas,
+        bg=PANEL_COLOR,
+        highlightthickness=0,
+        borderwidth=0
+    )
+
+    panel_margin = 8
+
+    panel_window = canvas.create_window(
+        panel_margin,
+        panel_margin,
+        anchor="nw",
+        window=panel
+    )
+
+    def resize_panel(event):
+        width = max(event.width - 2 * panel_margin, 1)
+        height = max(event.height - 2 * panel_margin, 1)
+
+        canvas.itemconfigure(
+            panel_window,
+            width=width,
+            height=height
+        )
+
+        draw_rounded_shape(
+            canvas,
+            "rounded-background",
+            0,
+            0,
+            event.width,
+            event.height,
+            18,
+            PANEL_COLOR
+        )
+        canvas.tag_lower("rounded-background")
+
+    canvas.bind("<Configure>", resize_panel)
+
+    return canvas, panel
 
 # ─────────────────────────────────────────────
 # Main Container
@@ -201,16 +275,15 @@ main_frame = tk.Frame(
 main_frame.pack(
     fill="both",
     expand=True,
-    padx=50,
-    pady=30
+    padx=36,
+    pady=26
 )
 
 # Responsive vertical layout
 main_frame.grid_rowconfigure(0, weight=0)  # Header
 main_frame.grid_rowconfigure(1, weight=0)  # Status
 main_frame.grid_rowconfigure(2, weight=1)  # Translation area
-main_frame.grid_rowconfigure(3, weight=0)  # Button
-main_frame.grid_rowconfigure(4, weight=0)  # Footer
+main_frame.grid_rowconfigure(3, weight=0)  # Footer
 
 main_frame.grid_columnconfigure(0, weight=1)
 
@@ -299,51 +372,42 @@ translation_frame.grid(
 )
 
 # Responsive columns
-translation_frame.grid_columnconfigure(0, weight=1)
+translation_frame.grid_columnconfigure(0, weight=1, minsize=280)
 translation_frame.grid_columnconfigure(1, weight=0)
-translation_frame.grid_columnconfigure(2, weight=1)
+translation_frame.grid_columnconfigure(2, weight=1, minsize=280)
 
-translation_frame.grid_rowconfigure(0, weight=1)
+translation_frame.grid_rowconfigure(0, weight=1, minsize=220)
 
 
 # ─────────────────────────────────────────────
 # Input Panel
 # ─────────────────────────────────────────────
 
-input_container = tk.Frame(
+input_column = tk.Frame(
     translation_frame,
-    bg=BORDER_COLOR
+    bg=BG_COLOR
 )
 
-input_container.grid(
+input_column.grid(
     row=0,
     column=0,
     sticky="nsew"
 )
 
-
-input_panel = tk.Frame(
-    input_container,
-    bg=PANEL_COLOR
-)
-
-input_panel.pack(
-    fill="both",
-    expand=True,
-    padx=1,
-    pady=1
-)
+input_column.grid_rowconfigure(1, weight=1)
+input_column.grid_columnconfigure(0, weight=1)
 
 
 input_header = tk.Frame(
-    input_panel,
-    bg=PANEL_COLOR
+    input_column,
+    bg=BG_COLOR
 )
 
-input_header.pack(
-    fill="x",
-    padx=18,
-    pady=(15, 8)
+input_header.grid(
+    row=0,
+    column=0,
+    sticky="ew",
+    pady=(0, 8)
 )
 
 
@@ -352,7 +416,7 @@ input_label = tk.Label(
     text="PLAIN TEXT",
     font=("Consolas", 10, "bold"),
     fg=SECONDARY_COLOR,
-    bg=PANEL_COLOR
+    bg=BG_COLOR
 )
 
 input_label.pack(
@@ -366,9 +430,9 @@ clear_button = tk.Button(
     text="×",
     command=clear_input,
     font=("Consolas", 16, "bold"),
-    bg=PANEL_COLOR,
+    bg=BG_COLOR,
     fg=TEXT_COLOR,
-    activebackground=PANEL_COLOR,
+    activebackground=BG_COLOR,
     activeforeground=ACCENT_HOVER,
     relief="flat",
     borderwidth=0,
@@ -380,6 +444,17 @@ clear_button = tk.Button(
 clear_button.pack(
     anchor="e",
     side="right"
+)
+
+
+input_container, input_panel = create_rounded_panel(
+    input_column
+)
+
+input_container.grid(
+    row=1,
+    column=0,
+    sticky="nsew"
 )
 
 
@@ -428,7 +503,7 @@ arrow = tk.Label(
 arrow.grid(
     row=0,
     column=1,
-    padx=25
+    padx=18
 )
 
 
@@ -436,51 +511,59 @@ arrow.grid(
 # Output Panel
 # ─────────────────────────────────────────────
 
-output_container = tk.Frame(
+output_column = tk.Frame(
     translation_frame,
-    bg=BORDER_COLOR
+    bg=BG_COLOR
 )
 
-output_container.grid(
+output_column.grid(
     row=0,
     column=2,
     sticky="nsew"
 )
 
+output_column.grid_rowconfigure(1, weight=1)
+output_column.grid_columnconfigure(0, weight=1)
 
-output_panel = tk.Frame(
-    output_container,
-    bg=PANEL_COLOR
+
+output_header = tk.Frame(
+    output_column,
+    bg=BG_COLOR
 )
 
-output_panel.pack(
-    fill="both",
-    expand=True,
-    padx=1,
-    pady=1
+output_header.grid(
+    row=0,
+    column=0,
+    sticky="ew",
+    pady=(0, 8)
 )
 
-output_panel.grid_rowconfigure(0, weight=0)
-output_panel.grid_rowconfigure(1, weight=1)
-output_panel.grid_rowconfigure(2, weight=0)
-
-output_panel.grid_columnconfigure(0, weight=1)
 
 output_label = tk.Label(
-    output_panel,
+    output_header,
     text="SHA-256 HASH",
     font=("Consolas", 10, "bold"),
     fg=SECONDARY_COLOR,
-    bg=PANEL_COLOR
+    bg=BG_COLOR
 )
 
-output_label.grid(
-    row=0,
-    column=0,
-    sticky="w",
-    padx=18,
-    pady=(15, 8)
+output_label.pack(anchor="w")
+
+
+output_container, output_panel = create_rounded_panel(
+    output_column
 )
+
+output_container.grid(
+    row=1,
+    column=0,
+    sticky="nsew"
+)
+
+output_panel.grid_rowconfigure(0, weight=1)
+output_panel.grid_rowconfigure(1, weight=0)
+
+output_panel.grid_columnconfigure(0, weight=1)
 
 
 output_text = tk.Text(
@@ -497,11 +580,11 @@ output_text = tk.Text(
 )
 
 output_text.grid(
-    row=1,
+    row=0,
     column=0,
     sticky="nsew",
     padx=2,
-    pady=(0, 5)
+    pady=5
 )
 
 
@@ -527,49 +610,12 @@ copy_button = tk.Button(
 )
 
 copy_button.grid(
-    row=2,
+    row=1,
     column=0,
     sticky="e",
     padx=18,
-    pady=(5, 15)
+    pady=(5, 12)
 )
-
-# ─────────────────────────────────────────────
-# Button
-# ─────────────────────────────────────────────
-
-translate_button = tk.Button(
-    main_frame,
-    text="HASH TEXT",
-    command=translate_text,
-    font=("Consolas", 10, "bold"),
-    fg=BG_COLOR,
-    bg=ACCENT_COLOR,
-    activeforeground=BG_COLOR,
-    activebackground=ACCENT_HOVER,
-    relief="flat",
-    borderwidth=0,
-    padx=35,
-    pady=12,
-    cursor="hand2"
-)
-
-translate_button.grid(
-    row=3,
-    column=0,
-    pady=(20, 15)
-)
-
-translate_button.bind(
-    "<Enter>",
-    on_button_enter
-)
-
-translate_button.bind(
-    "<Leave>",
-    on_button_leave
-)
-
 
 copy_button.bind(
     "<Enter>",
@@ -616,9 +662,9 @@ footer = tk.Label(
 )
 
 footer.grid(
-    row=4,
+    row=3,
     column=0,
-    pady=(0, 5)
+    pady=(16, 5)
 )
 
 
